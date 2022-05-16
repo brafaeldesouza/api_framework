@@ -5,9 +5,10 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth.models import User
 
 
-from api.models import Register
+from api.models import Log, Register
 
 
 
@@ -21,9 +22,11 @@ class GetListRegisterAPIView(APIView):
     
     # determines the need to be authenticated to access the methods
     permission_classes = (IsAuthenticated,)
+    status_message = 'Registers returned successfully.'
     
     def get(self, request):
         result = dict()
+        result['data'] = {}
         try:
 
             response = requests.get('https://jsonplaceholder.typicode.com/todos', headers = {} )
@@ -35,14 +38,30 @@ class GetListRegisterAPIView(APIView):
                     "id": data['id'],
                     "title": data['title']
                 })
-            result['status_message'] = 'Registers returned successfully.'
+               
+            result['status_message'] = self.status_message
             result['data'] = temp_list
-            return Response(result, status=status.HTTP_200_OK)
+            status_code = status.HTTP_200_OK
         
         except IntegrityError as ie: 
-            result['status_message'] = str(ie)
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            result['error'] = {
+                "reson" : str(ie) 
+            }
+            self.status_message = str(ie)
+            status_code = status.HTTP_400_BAD_REQUEST
 
         except Exception as e:
-            result['status_message'] = str(e)
-            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            result['error']  = {
+                "reason": str(e)
+            } 
+            self.status_message = str(e)
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        Log.objects.create(
+            data           = result['data'],
+            user           = request.user,
+            status_message = self.status_message,
+            status_code    = status_code
+        )
+        return Response(result, status=status_code)
+
