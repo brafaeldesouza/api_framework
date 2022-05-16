@@ -11,7 +11,7 @@ from api.models import Register
 
 
 
-class GetListRegisterPIView(APIView):
+class GetListRegisterAPIView(APIView):
     """This API view makes it possible to obtain details a graph
 
     Args:
