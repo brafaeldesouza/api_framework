@@ -28,12 +28,16 @@ class GetListRegisterAPIView(APIView):
         result = dict()
         result['data'] = {}
         try:
+            number_of_register = request.GET.get('number_of_register', None)
 
             response = requests.get('https://jsonplaceholder.typicode.com/todos', headers = {} )
-            
-            data_list = json.loads(response.text)
+            if number_of_register:
+                data_list = json.loads(response.text)[:int(number_of_register)]
+            else:
+                data_list = json.loads(response.text)
             temp_list = []
-            for data in data_list[:5]:
+
+            for data in data_list:
                 temp_list.append({
                     "id": data['id'],
                     "title": data['title']
